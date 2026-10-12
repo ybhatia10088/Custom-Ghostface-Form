@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#000000">
   <title>Incoming Call…</title>
   <meta name="description" content="Halloween movie night: tell us your favorite scary movie.">
   <style>
@@ -20,6 +21,9 @@
       height: 100%;
       overflow-x: hidden;
       font-family: "Courier New", Courier, monospace;
+      -webkit-text-size-adjust: 100%;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none; /* no pull-to-refresh / bounce mid-scare */
     }
 
     body {
@@ -35,7 +39,9 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 24px 16px;
+      /* Keep content clear of notches and home indicators */
+      padding: max(24px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right))
+               max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
       text-align: center;
     }
     .screen.active { display: flex; }
@@ -106,6 +112,8 @@
       padding: 16px 28px;
       cursor: pointer;
       box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.25);
+      touch-action: manipulation; /* no double-tap-zoom delay */
+      min-height: 48px;
     }
     .answer-btn:hover { background: var(--blood); border-color: var(--blood); }
 
@@ -119,6 +127,11 @@
 
     /* ================= 2. Black screen + answer ================= */
     #screen-call { background: #000; }
+    /* On phones, sit in the upper part of the screen so the on-screen
+       keyboard doesn't cover the text box. */
+    @media (max-height: 900px) and (pointer: coarse) {
+      #screen-call { justify-content: flex-start; padding-top: max(18vh, env(safe-area-inset-top)); }
+    }
 
     form {
       width: 100%;
@@ -156,6 +169,11 @@
       color: #555;
       font-size: 0.8rem;
       margin: 14px 0 0;
+    }
+    .enter-hint .touch { display: none; }
+    @media (pointer: coarse) {
+      .enter-hint .desktop { display: none; }
+      .enter-hint .touch { display: inline; }
     }
     .error { color: var(--blood); font-size: 0.9rem; min-height: 1.2em; margin: 10px 0 0; }
 
@@ -209,9 +227,11 @@
       color: #f2f2f2;
       text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
       opacity: 0;
-      animation: fadeUp 1.6s ease 1.8s forwards;
     }
+    /* Shown only after the clip and the line have both finished */
+    .see-you.show { animation: fadeUp 1.6s ease forwards; }
     .see-you span { color: var(--blood); }
+    .save-error { color: #aaa; font-size: 0.85rem; margin: 16px 0 0; max-width: 420px; }
 
     @keyframes fadeUp {
       from { opacity: 0; transform: translateY(10px); }
@@ -296,14 +316,15 @@
     <form id="form" novalidate autocomplete="off">
       <p class="prompt">Your favorite scary movie</p>
       <label for="movie" class="hp">Movie name</label>
-      <input id="movie" name="movie" type="text" required maxlength="200" aria-label="Your favorite scary movie">
+      <input id="movie" name="movie" type="text" required maxlength="200" aria-label="Your favorite scary movie"
+             enterkeyhint="send" autocapitalize="words" autocorrect="off" spellcheck="false">
       <div class="hp" aria-hidden="true">
         <label for="website">Leave this empty</label>
-        <input id="website" name="website" type="text" tabindex="-1">
+        <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
       </div>
       <!-- Hidden submit button so Enter (and the phone keyboard's "Go") submits -->
       <button type="submit" class="hp" tabindex="-1" aria-hidden="true">Submit</button>
-      <p class="enter-hint">Press Enter to answer</p>
+      <p class="enter-hint"><span class="desktop">Press Enter to answer</span><span class="touch">Tap Send on your keyboard to answer</span></p>
       <p class="error" id="error" role="alert"></p>
     </form>
   </section>
@@ -314,19 +335,21 @@
       <!-- Muted + playsinline lets phones play it without a tap. The still
            image shows if the video can't play. -->
       <video id="ghost-video" poster="images/ghostface.webp"
-             width="760" height="340" muted loop playsinline preload="auto"
+             width="760" height="340" muted playsinline webkit-playsinline preload="auto"
              aria-label="Ghostface raising a knife">
         <source src="images/ghostface.mp4" type="video/mp4">
         <source src="images/ghostface.webm" type="video/webm">
       </video>
-      <p class="see-you">See you at the movies<span>…</span></p>
+      <p class="see-you" id="see-you">See you at the movies<span>…</span></p>
     </div>
+    <p class="save-error" id="save-error" hidden>Your answer didn't go through. Check your connection and refresh to try again.</p>
   </section>
 
   <!-- Audio: the ring is an original vintage bell ringtone, the voice a
        supplied voice clip. See README.md to swap in your own. -->
   <audio id="ring" src="audio/ring.mp3" loop preload="auto"></audio>
   <audio id="voice" src="audio/voice.mp3" preload="auto"></audio>
+  <audio id="ending" src="audio/ending.mp3" preload="auto"></audio>
 
   <script>
     // ================== CONFIG ==================
@@ -364,6 +387,8 @@
 
       sound.play = () => {
         if (!sound.buffer) {
+          priming = false;
+          el.muted = false;
           el.currentTime = 0;
           return el.play();
         }
@@ -381,6 +406,20 @@
         return Promise.race([unlocked, timeout]);
       };
 
+      // Phones only let audio play if it was first started from a tap or key
+      // press. Start it silently during one so it's allowed to play later.
+      let priming = false;
+      sound.prime = () => {
+        if (sound.buffer) { if (ctx) ctx.resume(); return; }
+        priming = true;
+        el.muted = true;
+        el.play().then(() => {
+          if (priming) { el.pause(); el.currentTime = 0; }
+        }).catch(() => {}).finally(() => {
+          if (priming) { el.muted = false; priming = false; }
+        });
+      };
+
       sound.stop = () => {
         el.pause();
         el.currentTime = 0;
@@ -395,6 +434,8 @@
 
     const ring = makeSound($("ring"));
     const voice = makeSound($("voice"));
+    const ending = makeSound($("ending"));
+    const ghost = $("ghost-video");
     let answered = false;
 
     function show(id) {
@@ -446,8 +487,22 @@
       setTimeout(revealForm, 9000);
     });
 
-    // ---------- Submit with Enter ----------
-    $("form").addEventListener("submit", async (e) => {
+    // ---------- Unlock the ending on phones ----------
+    // The first tap on the text box (or first key typed) silently starts and
+    // stops the ending clip and line, so phones allow them to play after submit.
+    let ghostPriming = false;
+    function primeEnding() {
+      ["touchend", "click", "keydown"].forEach((t) => $("form").removeEventListener(t, primeEnding));
+      ending.prime();
+      ghostPriming = true;
+      ghost.play().then(() => {
+        if (ghostPriming) { ghost.pause(); ghost.currentTime = 0; }
+      }).catch(() => {}).finally(() => { ghostPriming = false; });
+    }
+    ["touchend", "click", "keydown"].forEach((t) => $("form").addEventListener(t, primeEnding));
+
+    // ---------- Submit with Enter / Send ----------
+    $("form").addEventListener("submit", (e) => {
       e.preventDefault();
       const movie = $("movie").value.trim();
       $("error").textContent = "";
@@ -457,32 +512,62 @@
         return;
       }
       $("movie").disabled = true;
-
-      // Bots fill the hidden field; skip saving but play along.
-      if (!$("website").value && SCRIPT_URL.startsWith("http")) {
-        try {
-          // text/plain + no-cors avoids a CORS preflight, which Apps Script can't answer.
-          await fetch(SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors",
-            headers: { "Content-Type": "text/plain;charset=utf-8" },
-            body: JSON.stringify({ movie }),
-          });
-        } catch (err) {
-          $("movie").disabled = false;
-          $("error").textContent = "The line went dead. Check your connection and press Enter again.";
-          return;
-        }
-      } else if (!SCRIPT_URL.startsWith("http")) {
-        console.warn("SCRIPT_URL not set — response not saved:", movie);
-      }
+      $("movie").blur(); // put the phone keyboard away
 
       voice.stop();
-      show("screen-reveal");
-      const ghost = $("ghost-video");
-      ghost.currentTime = 0;
-      ghost.play().catch(() => { /* poster image stays up */ });
+      // Start the ending immediately, while we're still inside the key press,
+      // so phone browsers allow the sound. The answer saves in the background.
+      playEnding();
+      save(movie);
     });
+
+    // The clip and the line each play once; the caption appears after both end.
+    function playEnding() {
+      show("screen-reveal");
+      const left = new Set(["video", "audio"]);
+      const showCaption = () => $("see-you").classList.add("show");
+      const finished = (what) => {
+        left.delete(what);
+        if (left.size === 0) showCaption();
+      };
+
+      ghostPriming = false;
+      ghost.currentTime = 0;
+      ghost.onended = () => finished("video");
+      // If the clip can't load at all, the still image shows instead and we
+      // don't wait on it.
+      const videoFailed = () => finished("video");
+      if (ghost.networkState === HTMLMediaElement.NETWORK_NO_SOURCE || ghost.error) videoFailed();
+      ghost.querySelector("source:last-of-type").addEventListener("error", videoFailed);
+      ghost.addEventListener("error", videoFailed);
+      ghost.play().catch(videoFailed);
+
+      ending.onended = () => finished("audio");
+      ending.play().catch(() => finished("audio"));
+
+      // Safety net in case a browser never reports that playback ended.
+      setTimeout(showCaption, 7000);
+    }
+
+    function save(movie) {
+      if ($("website").value) return; // bots fill the hidden field; skip saving
+      if (!SCRIPT_URL.startsWith("http")) {
+        console.warn("SCRIPT_URL not set — response not saved:", movie);
+        return;
+      }
+      // text/plain + no-cors avoids a CORS preflight, which Apps Script can't
+      // answer. keepalive lets the request finish even if the page is closed.
+      const send = () => fetch(SCRIPT_URL, {
+        method: "POST",
+        mode: "no-cors",
+        keepalive: true,
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ movie }),
+      });
+      send().catch(() => setTimeout(() => send().catch(() => {
+        $("save-error").hidden = false;
+      }), 2000));
+    }
   </script>
 </body>
 </html>

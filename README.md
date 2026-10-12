@@ -7,7 +7,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 3. The screen goes black and the caller's voice asks: *"What's your favorite scary movie?"*
 4. A text box fades in and they type the movie's name.
 5. They press **Enter**, and the answer is saved to a Google Sheet.
-6. A clip of Ghostface raising the knife plays on loop with *"See you at the movies..."* across it.
+6. Ghostface raises the knife (plays once) while the caller says one last line, then *"See you at the movies..."* fades in.
 
 ## Files
 
@@ -16,7 +16,8 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 | `index.html` | The whole webpage, with no build step or dependencies. |
 | `audio/ring.mp3` | Vintage telephone bell ringtone (synthesized, original). |
 | `audio/voice.mp3` | The caller's line (supplied clip, with a short pause added at the start). |
-| `images/ghostface.mp4` | Ending clip shown after they submit (loops, no sound). |
+| `audio/ending.mp3` | The caller's last line, played with the ending clip. |
+| `images/ghostface.mp4` | Ending clip shown after they submit (plays once, no sound). |
 | `images/ghostface.webm` | Same clip in WebM, for browsers that can't play the MP4. |
 | `images/ghostface.webp` | Still frame shown if the clip can't play. |
 | `apps-script/Code.gs` | The tiny backend that writes answers into your Google Sheet. |
@@ -69,5 +70,7 @@ Share that link (or turn it into a QR code for flyers in the hallway).
 
 - Most browsers (especially phones) block sound until the visitor taps the page. The page tries to ring immediately; if the browser blocks it, a small "Tap anywhere for sound" hint appears and the ringing starts on the first tap. The voice always plays because it starts from the **Answer the Call** tap.
 - Phones on silent mode won't play the voice. The text box still appears after the clip.
+- **Phones:** works in phone browsers (Safari, Chrome, Samsung Internet, and in-app browsers like Instagram's). Phones only allow sound that starts from a tap or key press, so the ending clip and line are unlocked when someone taps the text box and start the moment they press Send. On phones the text box sits higher on the screen so the keyboard doesn't cover it, and the keyboard shows a **Send** key.
+- The answer is sent in the background while the ending plays. If it fails (for example, no signal), a small note asks them to refresh and try again.
 - If you change `Code.gs` later, use **Deploy → Manage deployments → Edit → New version** so the same URL keeps working.
 - Includes a hidden anti-spam field and protects the sheet against formula injection.
