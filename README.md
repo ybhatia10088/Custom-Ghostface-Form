@@ -66,8 +66,8 @@ with the URL you copied.
 
 1. Commit and push `index.html` to the `main` branch of this repo.
 2. On GitHub, go to **Settings → Pages**.
-3. Under "Build and deployment", choose **Deploy from a branch**, pick `main` and `/ (root)`, and save.
-4. After a minute your link will be `https://<your-username>.github.io/Custom-Ghostface-Form/`.
+3. Under "Build and deployment", choose **Deploy from a branch**, pick your branch (here `claude/sharp-sagan-ujsmnv`) and `/ (root)`, and save.
+4. After a minute your link will be `https://<your-username>.github.io/<repo-name>/` (this one is https://ybhatia10088.github.io/Horror-Movie-Night/).
 
 Share that link (or turn it into a QR code for flyers in the hallway).
 
