@@ -14,11 +14,10 @@ function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents || '{}');
     const movie = clean_(data.movie, 200);
-    const name = clean_(data.name, 100);
     if (!movie) return json_({ ok: false, error: 'missing movie' });
 
     const sheet = getSheet_();
-    sheet.appendRow([new Date(), movie, name]);
+    sheet.appendRow([new Date(), movie]);
     return json_({ ok: true });
   } catch (err) {
     return json_({ ok: false, error: String(err) });
@@ -37,7 +36,7 @@ function getSheet_() {
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
-    sheet.appendRow(['Timestamp', 'Favorite Scary Movie', 'Name / Room']);
+    sheet.appendRow(['Timestamp', 'Favorite Scary Movie']);
     sheet.setFrozenRows(1);
   }
   return sheet;

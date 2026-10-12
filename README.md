@@ -2,18 +2,20 @@
 
 A spooky one-question form for residents to recommend a movie for Halloween movie night.
 
-1. Someone opens your link.
-2. A dark screen shows Ghostface with an "Incoming call" ringing.
-3. They tap **Answer the Call**.
-4. A low, slow voice asks: *"What's your favorite scary movie?"*
-5. A text field appears for their answer (plus an optional name/room #).
-6. Their response is saved to a Google Sheet.
+1. The page opens on a hand-sketched 1990s rotary phone, rattling and ringing with an old bell ringtone.
+2. They tap **Answer the Call**.
+3. The screen goes black and a raspy voice-changer voice asks: *"Hello... What's your favorite... scary movie?"*
+4. A text box fades in and they type the movie's name.
+5. They press **Enter**, and the answer is saved to a Google Sheet.
+6. Ghostface appears with a knife raised: *"See you at the movies..."*
 
 ## Files
 
 | File | What it is |
 | --- | --- |
-| `index.html` | The whole webpage — no build step, no dependencies. |
+| `index.html` | The whole webpage, with no build step or dependencies. |
+| `audio/ring.mp3` | Vintage telephone bell ringtone (synthesized, original). |
+| `audio/voice.mp3` | The caller's line (open-source Kokoro TTS + voice-changer effects, original). |
 | `apps-script/Code.gs` | The tiny backend that writes answers into your Google Sheet. |
 
 ## Setup (about 10 minutes)
@@ -53,13 +55,15 @@ Share that link (or turn it into a QR code for flyers in the hallway).
 
 ## Customizing
 
-- **The question** — change `const LINE = ...` in `index.html`.
-- **A real recorded voice** — the default uses the browser's built-in text-to-speech, pitched as low as it goes. For a creepier, consistent voice, record or generate an audio clip, add it to the repo (e.g. `ghostface.mp3`), and set `const VOICE_CLIP = "ghostface.mp3";`.
-- **Ending message** — edit the "Good choice." section in `index.html`.
+- **The voice**: replace `audio/voice.mp3` with any clip you have the rights to use. A fun option is to
+  record yourself (or an RA) through a Ghostface voice-changer mask/toy saying the line. The text box
+  appears as soon as the clip finishes.
+- **The ringtone**: replace `audio/ring.mp3` (it loops until they answer).
+- **Ending message**: edit the "See you at the movies" line in `index.html`.
 
 ## Notes
 
-- Browsers don't allow sound to play until the visitor taps something, which is exactly why the page uses the **Answer the Call** button. The ringtone starts after the first tap anywhere on the page, and the voice plays when they answer.
-- Make sure phones aren't on silent mode, or they won't hear the voice. The question is also typed out on screen so nobody misses it.
+- Most browsers (especially phones) block sound until the visitor taps the page. The page tries to ring immediately; if the browser blocks it, a small "Tap anywhere for sound" hint appears and the ringing starts on the first tap. The voice always plays because it starts from the **Answer the Call** tap.
+- Phones on silent mode won't play the voice. The text box still appears after the clip.
 - If you change `Code.gs` later, use **Deploy → Manage deployments → Edit → New version** so the same URL keeps working.
 - Includes a hidden anti-spam field and protects the sheet against formula injection.
