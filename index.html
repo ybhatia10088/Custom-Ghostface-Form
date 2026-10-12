@@ -172,11 +172,11 @@
       border-radius: 4px;
       animation: emerge 1.4s ease-out both;
     }
-    .reveal img {
+    .reveal video {
       display: block;
       width: 100%;
       height: auto;
-      animation: creep 12s ease-in-out 1.4s infinite alternate;
+      background: #000;
     }
     /* Darken the bottom so the caption stays readable over the image */
     .reveal::after {
@@ -193,14 +193,6 @@
       38% { filter: brightness(0.2); }
       46% { filter: brightness(1.4); }
       100% { opacity: 1; filter: brightness(1); }
-    }
-    /* Slow push-in with an occasional flicker, like old film */
-    @keyframes creep {
-      0% { transform: scale(1); filter: brightness(1); }
-      48% { filter: brightness(1); }
-      50% { filter: brightness(0.6); }
-      52% { filter: brightness(1.1); }
-      100% { transform: scale(1.08); filter: brightness(1); }
     }
 
     .see-you {
@@ -227,7 +219,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .phone-body, .handset, .ring-word, .reveal, .reveal img { animation: none !important; }
+      .phone-body, .handset, .ring-word, .reveal { animation: none !important; }
     }
   </style>
 </head>
@@ -319,8 +311,14 @@
   <!-- ===================== 3. Ghostface reveal ===================== -->
   <section id="screen-reveal" class="screen">
     <div class="reveal">
-      <!-- Swap in an animated GIF here (e.g. images/ghostface.gif) if you have one -->
-      <img src="images/ghostface.webp" alt="Ghostface in the dark" width="760" height="340">
+      <!-- Muted + playsinline lets phones play it without a tap. The still
+           image shows if the video can't play. -->
+      <video id="ghost-video" poster="images/ghostface.webp"
+             width="760" height="340" muted loop playsinline preload="auto"
+             aria-label="Ghostface raising a knife">
+        <source src="images/ghostface.mp4" type="video/mp4">
+        <source src="images/ghostface.webm" type="video/webm">
+      </video>
       <p class="see-you">See you at the movies<span>…</span></p>
     </div>
   </section>
@@ -481,6 +479,9 @@
 
       voice.stop();
       show("screen-reveal");
+      const ghost = $("ghost-video");
+      ghost.currentTime = 0;
+      ghost.play().catch(() => { /* poster image stays up */ });
     });
   </script>
 </body>
