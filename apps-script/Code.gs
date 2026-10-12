@@ -8,6 +8,12 @@
 
 const SHEET_NAME = 'Responses';
 
+// Paste your Google Sheet's full link here (copy it from the browser's address
+// bar), e.g. 'https://docs.google.com/spreadsheets/d/.../edit'. You can leave
+// it empty only if you opened this script from the Sheet via
+// Extensions -> Apps Script.
+const SPREADSHEET_URL = '';
+
 function doPost(e) {
   const lock = LockService.getScriptLock();
   lock.waitLock(10000);
@@ -26,13 +32,38 @@ function doPost(e) {
   }
 }
 
-// Lets you visit the web app URL in a browser to confirm it's deployed.
+// Visit the web app URL in a browser to check the setup. It also creates the
+// Responses tab, so you can see it's connected to the right Sheet.
 function doGet() {
-  return ContentService.createTextOutput('Ghostface form backend is running.');
+  try {
+    const sheet = getSheet_();
+    return ContentService.createTextOutput(
+      'Ghostface form backend is running. Answers go to the "' + SHEET_NAME +
+      '" tab of "' + sheet.getParent().getName() + '".');
+  } catch (err) {
+    return ContentService.createTextOutput(
+      'Backend is running, but it can\'t write to your Sheet: ' + err.message);
+  }
+}
+
+// Run this from the Apps Script editor (select testSave, click Run) to add a
+// test row and confirm everything works.
+function testSave() {
+  getSheet_().appendRow([new Date(), 'TEST - delete me']);
+}
+
+function spreadsheet_() {
+  if (SPREADSHEET_URL) return SpreadsheetApp.openByUrl(SPREADSHEET_URL);
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error('this script is not attached to a Sheet. ' +
+      'Paste your Sheet\'s link into SPREADSHEET_URL at the top of the script, then deploy a new version.');
+  }
+  return ss;
 }
 
 function getSheet_() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = spreadsheet_();
   let sheet = ss.getSheetByName(SHEET_NAME);
   if (!sheet) {
     sheet = ss.insertSheet(SHEET_NAME);
