@@ -64,7 +64,8 @@ Share that link (or turn it into a QR code for flyers in the hallway).
   appears as soon as the clip finishes.
 - **The ringtone**: replace `audio/ring.mp3` (it loops until they answer).
 - **Ending clip**: replace `images/ghostface.mp4` and `images/ghostface.webm` (plus `images/ghostface.webp`, its still backup).
-- **Ending message**: edit the "See you at the movies" line in `index.html`.
+- **Ending message**: search `index.html` for "See you at the movies" (it's in the `showCaption` script).
+- **Fonts**: Cormorant Garamond (question, answer, caption) and Cinzel (small labels), loaded from Google Fonts. They fall back to Georgia if Google Fonts can't load.
 
 ## Notes
 

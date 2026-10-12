@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#000000">
   <title>Incoming Call…</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cormorant+Garamond:ital,wght@0,500;1,500;1,600&display=swap" rel="stylesheet">
   <meta name="description" content="Halloween movie night: tell us your favorite scary movie.">
   <style>
     :root {
@@ -12,6 +15,8 @@
       --ink: #1b1b1b;
       --blood: #c4001f;
       --muted: #7a7a7a;
+      --display: "Cormorant Garamond", Garamond, Georgia, "Times New Roman", serif;
+      --caps: "Cinzel", "Trajan Pro", Georgia, serif;
     }
 
     * { box-sizing: border-box; }
@@ -133,49 +138,107 @@
       #screen-call { justify-content: flex-start; padding-top: max(18vh, env(safe-area-inset-top)); }
     }
 
+    .question {
+      font-family: var(--display);
+      font-style: italic;
+      font-weight: 500;
+      font-size: clamp(1.9rem, 8vw, 3rem);
+      line-height: 1.15;
+      color: #ece6dc;
+      max-width: 14em;
+      margin: 0 auto 36px;
+      min-height: 2.3em; /* reserve space so nothing jumps while it types */
+      text-wrap: balance;
+    }
+
+    /* Letter-by-letter reveal: each letter sharpens out of a red haze */
+    .word { display: inline-block; white-space: nowrap; }
+    .ch {
+      display: inline-block;
+      opacity: 0;
+      animation: materialize 0.7s ease forwards;
+    }
+    @keyframes materialize {
+      0% { opacity: 0; filter: blur(8px); transform: translateY(0.12em); text-shadow: 0 0 18px rgba(196, 0, 31, 0.9); }
+      60% { opacity: 1; filter: blur(0); text-shadow: 0 0 14px rgba(196, 0, 31, 0.5); }
+      100% { opacity: 1; filter: blur(0); transform: none; text-shadow: 0 0 10px rgba(196, 0, 31, 0.18); }
+    }
+
     form {
       width: 100%;
       max-width: 420px;
+      margin: 0 auto;
       opacity: 0;
+      transform: translateY(8px);
       pointer-events: none;
-      transition: opacity 1.2s ease;
+      transition: opacity 1s ease, transform 1s ease;
     }
-    form.visible { opacity: 1; pointer-events: auto; }
+    form.visible { opacity: 1; transform: none; pointer-events: auto; }
 
-    .prompt {
-      color: var(--blood);
-      font-size: 0.95rem;
-      letter-spacing: 0.2em;
+    .label {
+      display: block;
+      font-family: var(--caps);
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.35em;
       text-transform: uppercase;
-      margin: 0 0 14px;
+      color: var(--blood);
+      margin: 0 0 6px;
     }
+
+    /* Thin grey rule with a red line that draws outward on focus */
+    .field { position: relative; }
+    .field::before, .field::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 1px;
+      background: #3a3a3a;
+    }
+    .field::after {
+      height: 2px;
+      background: var(--blood);
+      box-shadow: 0 0 12px rgba(196, 0, 31, 0.6);
+      transform: scaleX(0);
+      transition: transform 0.5s ease;
+    }
+    .field:focus-within::after { transform: scaleX(1); }
 
     input[type="text"] {
       width: 100%;
-      padding: 14px 4px;
-      font-family: inherit;
-      font-size: 1.3rem;
+      padding: 12px 4px;
+      font-family: var(--display);
+      font-weight: 500;
+      font-size: 1.7rem; /* 16px+ also stops iPhones zooming in on focus */
       text-align: center;
-      color: #f2f2f2;
+      color: #f4efe6;
       background: transparent;
       border: 0;
-      border-bottom: 2px solid #3a3a3a;
+      border-radius: 0;
       outline: none;
       caret-color: var(--blood);
+      -webkit-appearance: none;
+      appearance: none;
     }
-    input[type="text"]:focus { border-bottom-color: var(--blood); }
+    input[type="text"]::placeholder { color: #4d4d4d; font-style: italic; }
+    input[type="text"]:disabled { color: #8a8a8a; }
 
     .enter-hint {
-      color: #555;
-      font-size: 0.8rem;
-      margin: 14px 0 0;
+      font-family: var(--caps);
+      font-size: 0.65rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #7a7a7a;
+      margin: 16px 0 0;
     }
     .enter-hint .touch { display: none; }
     @media (pointer: coarse) {
       .enter-hint .desktop { display: none; }
       .enter-hint .touch { display: inline; }
     }
-    .error { color: var(--blood); font-size: 0.9rem; min-height: 1.2em; margin: 10px 0 0; }
+    .error { font-family: var(--display); font-style: italic; color: var(--blood); font-size: 1.1rem; min-height: 1.4em; margin: 10px 0 0; }
 
     /* Hidden honeypot field to catch spam bots */
     .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
@@ -221,16 +284,18 @@
       z-index: 1;
       margin: 0;
       padding: 0 16px;
-      font-family: Georgia, "Times New Roman", serif;
+      font-family: var(--display);
       font-style: italic;
-      font-size: clamp(1.3rem, 5.5vw, 2.6rem);
-      color: #f2f2f2;
-      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
-      opacity: 0;
+      font-weight: 600;
+      font-size: clamp(1.6rem, 6.4vw, 3rem);
+      letter-spacing: 0.02em;
+      color: #f4efe6;
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.95);
+      visibility: hidden;
     }
     /* Shown only after the clip and the line have both finished */
-    .see-you.show { animation: fadeUp 1.6s ease forwards; }
-    .see-you span { color: var(--blood); }
+    .see-you.show { visibility: visible; }
+    .see-you .blood { color: var(--blood); }
     .save-error { color: #aaa; font-size: 0.85rem; margin: 16px 0 0; max-width: 420px; }
 
     @keyframes fadeUp {
@@ -239,7 +304,8 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .phone-body, .handset, .ring-word, .reveal { animation: none !important; }
+      .phone-body, .handset, .ring-word, .reveal, .ch { animation: none !important; }
+      .ch { opacity: 1; }
     }
   </style>
 </head>
@@ -313,11 +379,13 @@
 
   <!-- ===================== 2. Black screen ===================== -->
   <section id="screen-call" class="screen">
+    <h1 class="question" id="question" aria-live="polite"></h1>
     <form id="form" novalidate autocomplete="off">
-      <p class="prompt">Your favorite scary movie</p>
-      <label for="movie" class="hp">Movie name</label>
-      <input id="movie" name="movie" type="text" required maxlength="200" aria-label="Your favorite scary movie"
-             enterkeyhint="send" autocapitalize="words" autocorrect="off" spellcheck="false">
+      <label for="movie" class="label">Your answer</label>
+      <div class="field">
+        <input id="movie" name="movie" type="text" required maxlength="200" placeholder="Name the movie…"
+               enterkeyhint="send" autocapitalize="words" autocorrect="off" spellcheck="false">
+      </div>
       <div class="hp" aria-hidden="true">
         <label for="website">Leave this empty</label>
         <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
@@ -340,7 +408,7 @@
         <source src="images/ghostface.mp4" type="video/mp4">
         <source src="images/ghostface.webm" type="video/webm">
       </video>
-      <p class="see-you" id="see-you">See you at the movies<span>…</span></p>
+      <p class="see-you" id="see-you" aria-label="See you at the movies"></p>
     </div>
     <p class="save-error" id="save-error" hidden>Your answer didn't go through. Check your connection and refresh to try again.</p>
   </section>
@@ -438,6 +506,30 @@
     const ghost = $("ghost-video");
     let answered = false;
 
+    // Write text into el one letter at a time. Words stay unbroken so lines
+    // wrap cleanly. `start` and `duration` are in milliseconds.
+    function revealLetters(el, parts, start, duration) {
+      el.textContent = "";
+      const letters = [];
+      parts.forEach(({ text, className, attach }) => {
+        text.split(" ").forEach((word, i) => {
+          if (i > 0 || (el.childNodes.length && !attach)) el.append(" ");
+          const w = document.createElement("span");
+          w.className = "word" + (className ? " " + className : "");
+          for (const c of word) {
+            const ch = document.createElement("span");
+            ch.className = "ch";
+            ch.textContent = c;
+            w.append(ch);
+            letters.push(ch);
+          }
+          el.append(w);
+        });
+      });
+      const step = duration / Math.max(letters.length - 1, 1);
+      letters.forEach((ch, i) => { ch.style.animationDelay = (start + i * step) + "ms"; });
+    }
+
     function show(id) {
       document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
       $(id).classList.add("active");
@@ -478,6 +570,9 @@
       };
       // play() must run right here in the tap handler, or iPhones block it.
       // The pause on the line before the voice is baked into voice.mp3.
+      // Type the question out in time with the voice (it starts ~0.9s in), so
+      // it also reads fine with the sound off.
+      revealLetters($("question"), [{ text: "What's your favorite scary movie?" }], 900, 2000);
       voice.onended = revealForm;
       voice.play().catch((err) => {
         console.warn("Voice could not play:", err);
@@ -525,7 +620,16 @@
     function playEnding() {
       show("screen-reveal");
       const left = new Set(["video", "audio"]);
-      const showCaption = () => $("see-you").classList.add("show");
+      let captioned = false;
+      const showCaption = () => {
+        if (captioned) return;
+        captioned = true;
+        revealLetters($("see-you"), [
+          { text: "See you at the movies" },
+          { text: "…", className: "blood", attach: true },
+        ], 0, 1400);
+        $("see-you").classList.add("show");
+      };
       const finished = (what) => {
         left.delete(what);
         if (left.size === 0) showCaption();
