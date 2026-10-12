@@ -357,10 +357,66 @@
     // ============================================
 
     const $ = (id) => document.getElementById(id);
-    const ring = $("ring");
-    const voice = $("voice");
-    [ring, voice].forEach((a) =>
-      a.addEventListener("error", () => console.warn("Audio file failed to load:", a.src)));
+    // Some viewers (embedded previews, strict security settings) refuse to
+    // load <audio>. If that happens, decode the same file with the Web Audio
+    // API instead, which isn't blocked the same way.
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    let ctx = null;
+
+    function makeSound(el) {
+      const sound = { buffer: null, source: null, onended: null };
+      el.addEventListener("ended", () => sound.onended && sound.onended());
+
+      async function useFallback() {
+        if (!AudioCtx || sound.buffer) return;
+        try {
+          ctx = ctx || new AudioCtx();
+          const src = el.getAttribute("src");
+          const bytes = src.startsWith("data:")
+            ? Uint8Array.from(atob(src.slice(src.indexOf(",") + 1)), (c) => c.charCodeAt(0)).buffer
+            : await (await fetch(src)).arrayBuffer();
+          sound.buffer = await ctx.decodeAudioData(bytes);
+        } catch (err) {
+          console.warn("Audio could not be loaded:", el.id, err);
+        }
+      }
+      // The error may already have happened before this script ran.
+      if (el.error) useFallback();
+      else el.addEventListener("error", useFallback);
+
+      sound.play = () => {
+        if (!sound.buffer) {
+          el.currentTime = 0;
+          return el.play();
+        }
+        sound.stop();
+        const source = ctx.createBufferSource();
+        source.buffer = sound.buffer;
+        source.loop = el.loop;
+        source.connect(ctx.destination);
+        source.onended = () => sound.onended && sound.onended();
+        sound.source = source;
+        // resume() must be called from the tap itself to unlock sound.
+        const unlocked = ctx.resume().then(() => source.start());
+        const timeout = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Sound is locked until the page is tapped")), 1500));
+        return Promise.race([unlocked, timeout]);
+      };
+
+      sound.stop = () => {
+        el.pause();
+        el.currentTime = 0;
+        if (sound.source) {
+          sound.source.onended = null;
+          try { sound.source.stop(); } catch (e) { /* never started */ }
+          sound.source = null;
+        }
+      };
+      return sound;
+    }
+
+    const ring = makeSound($("ring"));
+    const voice = makeSound($("voice"));
     let answered = false;
 
     function show(id) {
@@ -371,9 +427,13 @@
     // ---------- Ringing on page load ----------
     // Browsers usually block sound until the visitor taps the page. Try to ring
     // right away; if blocked, start ringing on the first tap anywhere.
+    let ringing = false;
     function startRing() {
-      if (answered) return Promise.resolve();
-      return ring.play().then(() => $("sound-hint").classList.remove("show"));
+      if (answered || ringing) return Promise.resolve();
+      ringing = true; // set now so a tap's touchend + click don't double-ring
+      return ring.play().then(
+        () => $("sound-hint").classList.remove("show"),
+        (err) => { ringing = false; throw err; });
     }
     startRing().catch(() => {
       $("sound-hint").classList.add("show");
@@ -390,8 +450,7 @@
     // ---------- Answer the call ----------
     $("answer").addEventListener("click", () => {
       answered = true;
-      ring.pause();
-      ring.currentTime = 0;
+      ring.stop();
       show("screen-call");
 
       const revealForm = () => {
@@ -400,7 +459,6 @@
       };
       // play() must run right here in the tap handler, or iPhones block it.
       // The pause on the line before the voice is baked into voice.mp3.
-      voice.currentTime = 0;
       voice.onended = revealForm;
       voice.play().catch((err) => {
         console.warn("Voice could not play:", err);
@@ -441,7 +499,7 @@
         console.warn("SCRIPT_URL not set — response not saved:", movie);
       }
 
-      voice.pause();
+      voice.stop();
       show("screen-reveal");
     });
   </script>
