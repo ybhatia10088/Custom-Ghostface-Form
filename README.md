@@ -7,7 +7,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 3. The screen goes black and the caller's voice asks: *"What's your favorite scary movie?"*
 4. A text box fades in and they type the movie's name.
 5. They press **Enter**, and the answer is saved to a Google Sheet.
-6. Ghostface appears with a knife raised: *"See you at the movies..."*
+6. A dark Ghostface image fades in with *"See you at the movies..."* across it.
 
 ## Files
 
@@ -16,6 +16,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 | `index.html` | The whole webpage, with no build step or dependencies. |
 | `audio/ring.mp3` | Vintage telephone bell ringtone (synthesized, original). |
 | `audio/voice.mp3` | The caller's line (supplied clip, with a short pause added at the start). |
+| `images/ghostface.webp` | Ending image shown after they submit. |
 | `apps-script/Code.gs` | The tiny backend that writes answers into your Google Sheet. |
 
 ## Setup (about 10 minutes)
@@ -59,6 +60,7 @@ Share that link (or turn it into a QR code for flyers in the hallway).
   record yourself (or an RA) through a Ghostface voice-changer mask/toy saying the line. The text box
   appears as soon as the clip finishes.
 - **The ringtone**: replace `audio/ring.mp3` (it loops until they answer).
+- **Ending image**: replace `images/ghostface.webp`, or drop in an animated GIF and point the `<img>` in `index.html` at it.
 - **Ending message**: edit the "See you at the movies" line in `index.html`.
 
 ## Notes

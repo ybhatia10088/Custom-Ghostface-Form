@@ -165,42 +165,59 @@
     /* ================= 3. Ghostface reveal ================= */
     #screen-reveal { background: #000; }
 
-    .ghost {
-      width: min(80vw, 340px);
-      height: auto;
-      overflow: visible;
+    .reveal {
+      position: relative;
+      width: min(100%, 760px);
+      overflow: hidden;
+      border-radius: 4px;
       animation: emerge 1.4s ease-out both;
     }
-    .knife-arm {
-      transform-origin: 236px 250px;
-      animation: raise 0.9s cubic-bezier(0.2, 1.4, 0.4, 1) 0.9s both;
+    .reveal img {
+      display: block;
+      width: 100%;
+      height: auto;
+      animation: creep 12s ease-in-out 1.4s infinite alternate;
     }
-    .glint { animation: glint 2.4s ease-in-out 1.9s infinite; opacity: 0; }
+    /* Darken the bottom so the caption stays readable over the image */
+    .reveal::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 45%, rgba(0, 0, 0, 0.85) 100%);
+      pointer-events: none;
+    }
 
     @keyframes emerge {
-      0% { opacity: 0; transform: scale(0.85); filter: brightness(0); }
+      0% { opacity: 0; filter: brightness(0); }
       30% { opacity: 1; filter: brightness(1.8); }
       38% { filter: brightness(0.2); }
       46% { filter: brightness(1.4); }
-      100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+      100% { opacity: 1; filter: brightness(1); }
     }
-    @keyframes raise {
-      0% { transform: rotate(55deg) translateY(40px); opacity: 0; }
-      100% { transform: rotate(0) translateY(0); opacity: 1; }
-    }
-    @keyframes glint {
-      0%, 70%, 100% { opacity: 0; }
-      80% { opacity: 1; }
+    /* Slow push-in with an occasional flicker, like old film */
+    @keyframes creep {
+      0% { transform: scale(1); filter: brightness(1); }
+      48% { filter: brightness(1); }
+      50% { filter: brightness(0.6); }
+      52% { filter: brightness(1.1); }
+      100% { transform: scale(1.08); filter: brightness(1); }
     }
 
     .see-you {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 6%;
+      z-index: 1;
+      margin: 0;
+      padding: 0 16px;
       font-family: Georgia, "Times New Roman", serif;
       font-style: italic;
-      font-size: clamp(1.6rem, 7vw, 2.4rem);
+      font-size: clamp(1.3rem, 5.5vw, 2.6rem);
       color: #f2f2f2;
-      margin: 18px 0 0;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
       opacity: 0;
-      animation: fadeUp 1.6s ease 2.2s forwards;
+      animation: fadeUp 1.6s ease 1.8s forwards;
     }
     .see-you span { color: var(--blood); }
 
@@ -210,7 +227,7 @@
     }
 
     @media (prefers-reduced-motion: reduce) {
-      .phone-body, .handset, .ring-word, .ghost, .knife-arm { animation: none !important; }
+      .phone-body, .handset, .ring-word, .reveal, .reveal img { animation: none !important; }
     }
   </style>
 </head>
@@ -279,7 +296,7 @@
 
     <p class="ring-word" aria-hidden="true">RING! RING!</p>
     <button id="answer" class="answer-btn" type="button">☎ Answer the Call</button>
-    <p class="sound-hint" id="sound-hint">🔊 Tap anywhere for sound</p>
+    <p class="sound-hint" id="sound-hint">Tap anywhere for sound</p>
   </section>
 
   <!-- ===================== 2. Black screen ===================== -->
@@ -301,48 +318,11 @@
 
   <!-- ===================== 3. Ghostface reveal ===================== -->
   <section id="screen-reveal" class="screen">
-    <svg class="ghost" viewBox="0 0 320 380" aria-label="Ghostface raising a knife">
-      <defs>
-        <linearGradient id="mask-shade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#cfcfcf"/>
-          <stop offset="45%" stop-color="#ffffff"/>
-          <stop offset="100%" stop-color="#bcbcbc"/>
-        </linearGradient>
-        <linearGradient id="blade" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stop-color="#8d949c"/>
-          <stop offset="50%" stop-color="#eef2f6"/>
-          <stop offset="100%" stop-color="#7a8088"/>
-        </linearGradient>
-      </defs>
-
-      <!-- robe and hood: tattered, pointed peak -->
-      <path d="M150 18 C96 26 70 80 66 140 C62 196 40 240 16 300 L4 380 L316 380 L300 300 C276 244 250 196 246 140 C242 80 214 22 150 18 Z" fill="#070707" stroke="#2e2e2e" stroke-width="2.5"/>
-      <path d="M110 60 C100 120 104 190 120 240 M196 60 C210 120 208 190 194 240" fill="none" stroke="#1c1c1c" stroke-width="4"/>
-
-      <!-- mask: long, narrow, drooping -->
-      <path d="M156 52 C118 52 104 92 106 136 C108 186 124 236 156 262 C188 236 204 186 206 136 C208 92 194 52 156 52 Z" fill="url(#mask-shade)"/>
-      <!-- eyes: tall teardrops, sagging outward -->
-      <path d="M140 104 C130 92 116 96 116 114 C116 140 124 170 136 172 C146 172 150 150 148 128 C147 116 145 108 140 104 Z" fill="#000"/>
-      <path d="M172 104 C182 92 196 96 196 114 C196 140 188 170 176 172 C166 172 162 150 164 128 C165 116 167 108 172 104 Z" fill="#000"/>
-      <!-- long screaming mouth -->
-      <path d="M156 188 C144 188 140 204 142 222 C144 240 150 250 156 250 C162 250 168 240 170 222 C172 204 168 188 156 188 Z" fill="#000"/>
-
-      <!-- other gloved hand, reaching -->
-      <path d="M70 250 C80 236 98 236 104 248 C108 258 98 270 86 270 C76 270 66 262 70 250 Z" fill="#0e0e0e" stroke="#1d1d1d" stroke-width="2"/>
-
-      <!-- knife arm raised high -->
-      <g class="knife-arm">
-        <path d="M206 214 C226 180 242 150 252 118 L274 126 C268 160 254 196 232 232 Z" fill="#070707" stroke="#151515" stroke-width="2"/>
-        <!-- glove fist -->
-        <path d="M248 104 C258 92 280 96 282 110 C284 124 272 134 258 132 C248 130 242 116 248 104 Z" fill="#0e0e0e" stroke="#1d1d1d" stroke-width="2"/>
-        <!-- handle -->
-        <rect x="258" y="78" width="14" height="30" rx="4" fill="#2a1d14" transform="rotate(14 265 93)"/>
-        <!-- hunting-knife blade -->
-        <path d="M262 80 C258 50 262 22 276 0 C282 24 284 54 276 82 Z" fill="url(#blade)" stroke="#55595e" stroke-width="1.2" transform="rotate(14 270 40)"/>
-        <path class="glint" d="M276 18 l4 -10 l2 10 l10 2 l-10 3 l-2 10 l-3 -10 l-10 -3 Z" fill="#fff" transform="rotate(14 270 40)"/>
-      </g>
-    </svg>
-    <p class="see-you">See you at the movies<span>…</span></p>
+    <div class="reveal">
+      <!-- Swap in an animated GIF here (e.g. images/ghostface.gif) if you have one -->
+      <img src="images/ghostface.webp" alt="Ghostface in the dark" width="760" height="340">
+      <p class="see-you">See you at the movies<span>…</span></p>
+    </div>
   </section>
 
   <!-- Audio: the ring is an original vintage bell ringtone, the voice a
