@@ -24,7 +24,21 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 
 ## Setup (about 10 minutes)
 
-### 1. Connect the Google Sheet
+### 1. Choose where answers are recorded
+
+**Option A: Google Form (easiest, no code)**
+
+1. Create a Google Form (e.g. "Movie Night Picks") with one **Short answer** question: "What's your favorite scary movie?".
+2. **Settings → Responses:** set *Collect email addresses* to **Do not collect**, and turn **off** any *Restrict to users in …* option (school and work accounts often have this on, which would block residents from submitting).
+3. Click **Publish**.
+4. Click **⋮ → Get pre-filled link**, type `TEST` in the answer box, click **Get link**, then **Copy link**.
+5. In `index.html`, paste it between the quotes of `const GOOGLE_FORM_PREFILL_LINK = "";`.
+
+Answers show up in the form's **Responses** tab. Click **Link to Sheets** there to get them in a spreadsheet too.
+
+**Option B: Google Sheet + Apps Script.** Follow the two steps below instead.
+
+#### Connect the Google Sheet
 
 1. Create a new Google Sheet (e.g. "Movie Night Picks").
 2. In the sheet, go to **Extensions → Apps Script**.
@@ -38,7 +52,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 
 A `Responses` tab with headers is created automatically on the first submission.
 
-### 2. Plug the URL into the page
+#### Plug the URL into the page
 
 Open `index.html` and replace the placeholder near the bottom:
 
@@ -48,7 +62,7 @@ const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
 
 with the URL you copied.
 
-### 3. Publish the page (free, with GitHub Pages)
+### 2. Publish the page (free, with GitHub Pages)
 
 1. Commit and push `index.html` to the `main` branch of this repo.
 2. On GitHub, go to **Settings → Pages**.

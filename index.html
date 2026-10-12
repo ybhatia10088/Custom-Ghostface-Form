@@ -421,7 +421,10 @@
 
   <script>
     // ================== CONFIG ==================
-    // Paste your Google Apps Script Web App URL here (see README.md).
+    // Where answers get recorded (see README.md). Fill in ONE of these:
+    // Option A (easiest): your Google Form's "Get pre-filled link".
+    const GOOGLE_FORM_PREFILL_LINK = "";
+    // Option B: a Google Apps Script web app URL (ends in /exec).
     const SCRIPT_URL = "PASTE_YOUR_APPS_SCRIPT_WEB_APP_URL_HERE";
     // ============================================
 
@@ -653,21 +656,46 @@
       setTimeout(showCaption, 7000);
     }
 
+    // Turn a Google Form pre-filled link into where to send the answer.
+    function googleFormTarget(link) {
+      try {
+        const url = new URL(link);
+        const field = [...url.searchParams.keys()].find((k) => k.startsWith("entry."));
+        if (!field || !url.pathname.includes("/forms/")) return null;
+        const action = url.origin + url.pathname.replace(/\/(viewform|edit)$/, "/formResponse");
+        return { action, field };
+      } catch (e) {
+        return null;
+      }
+    }
+
     function save(movie) {
       if ($("website").value) return; // bots fill the hidden field; skip saving
-      if (!SCRIPT_URL.startsWith("http")) {
-        console.warn("SCRIPT_URL not set — response not saved:", movie);
+
+      let send;
+      const form = GOOGLE_FORM_PREFILL_LINK && googleFormTarget(GOOGLE_FORM_PREFILL_LINK);
+      if (form) {
+        // Submit straight into the Google Form, as if typed there.
+        send = () => fetch(form.action, {
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          body: new URLSearchParams({ [form.field]: movie }),
+        });
+      } else if (SCRIPT_URL.startsWith("http")) {
+        // text/plain + no-cors avoids a CORS preflight, which Apps Script can't
+        // answer. keepalive lets the request finish even if the page is closed.
+        send = () => fetch(SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          keepalive: true,
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({ movie }),
+        });
+      } else {
+        console.warn("No Google Form or Apps Script set up — response not saved:", movie);
         return;
       }
-      // text/plain + no-cors avoids a CORS preflight, which Apps Script can't
-      // answer. keepalive lets the request finish even if the page is closed.
-      const send = () => fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        keepalive: true,
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ movie }),
-      });
       send().catch(() => setTimeout(() => send().catch(() => {
         $("save-error").hidden = false;
       }), 2000));
