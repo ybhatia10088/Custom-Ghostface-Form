@@ -4,7 +4,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 
 1. The page opens on a hand-sketched 1990s rotary phone, rattling and ringing with an old bell ringtone.
 2. They tap **Answer the Call**.
-3. The screen goes black and a raspy voice-changer voice asks: *"Hello... What's your favorite... scary movie?"*
+3. The screen goes black and the caller's voice asks: *"What's your favorite scary movie?"*
 4. A text box fades in and they type the movie's name.
 5. They press **Enter**, and the answer is saved to a Google Sheet.
 6. Ghostface appears with a knife raised: *"See you at the movies..."*
@@ -15,7 +15,7 @@ A spooky one-question form for residents to recommend a movie for Halloween movi
 | --- | --- |
 | `index.html` | The whole webpage, with no build step or dependencies. |
 | `audio/ring.mp3` | Vintage telephone bell ringtone (synthesized, original). |
-| `audio/voice.mp3` | The caller's line (open-source Kokoro TTS + voice-changer effects, original). |
+| `audio/voice.mp3` | The caller's line (supplied clip, with a short pause added at the start). |
 | `apps-script/Code.gs` | The tiny backend that writes answers into your Google Sheet. |
 
 ## Setup (about 10 minutes)
