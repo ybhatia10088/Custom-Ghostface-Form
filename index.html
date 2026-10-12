@@ -359,6 +359,8 @@
     const $ = (id) => document.getElementById(id);
     const ring = $("ring");
     const voice = $("voice");
+    [ring, voice].forEach((a) =>
+      a.addEventListener("error", () => console.warn("Audio file failed to load:", a.src)));
     let answered = false;
 
     function show(id) {
@@ -379,8 +381,10 @@
         if (e.target.closest && e.target.closest("#answer")) return;
         startRing().catch(() => {});
       };
-      document.addEventListener("pointerdown", unlock, { once: true });
-      document.addEventListener("keydown", unlock, { once: true });
+      // Only click/touchend/keydown count as a "user gesture" on iPhones;
+      // pointerdown/touchstart do not.
+      ["click", "touchend", "keydown"].forEach((type) =>
+        document.addEventListener(type, unlock, { once: true }));
     });
 
     // ---------- Answer the call ----------
@@ -394,14 +398,16 @@
         $("form").classList.add("visible");
         $("movie").focus();
       };
-      // Brief silence on the line, then the voice.
-      setTimeout(() => {
-        voice.currentTime = 0;
-        voice.onended = revealForm;
-        voice.play().catch(revealForm);
-        // Safety net in case the audio never fires "ended".
-        setTimeout(revealForm, 9000);
-      }, 900);
+      // play() must run right here in the tap handler, or iPhones block it.
+      // The pause on the line before the voice is baked into voice.mp3.
+      voice.currentTime = 0;
+      voice.onended = revealForm;
+      voice.play().catch((err) => {
+        console.warn("Voice could not play:", err);
+        revealForm();
+      });
+      // Safety net in case the audio never fires "ended".
+      setTimeout(revealForm, 9000);
     });
 
     // ---------- Submit with Enter ----------
